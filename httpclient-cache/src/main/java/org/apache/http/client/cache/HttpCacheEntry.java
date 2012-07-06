@@ -36,7 +36,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.annotation.Immutable;
+import org.apache.http.impl.cookie.DateParseException;
+import org.apache.http.impl.cookie.DateUtils;
 import org.apache.http.message.HeaderGroup;
+import org.apache.http.protocol.HTTP;
 
 /**
  * Structure used to store an {@link HttpResponse} in a cache. Some entries
@@ -58,6 +61,7 @@ public class HttpCacheEntry implements Serializable {
     private final HeaderGroup responseHeaders;
     private final Resource resource;
     private final Map<String,String> variantMap;
+    private final Date dateHeaderValue;
 
     /**
      * Create a new {@link HttpCacheEntry} with variants.
@@ -106,6 +110,7 @@ public class HttpCacheEntry implements Serializable {
         this.variantMap = variantMap != null
             ? new HashMap<String,String>(variantMap)
             : null;
+        this.dateHeaderValue = parseDate();
     }
 
     /**
@@ -199,6 +204,13 @@ public class HttpCacheEntry implements Serializable {
     }
 
     /**
+     * Gets the Date value of the "Date" header or null if the header is missing or cannot be parsed
+     */
+    public Date getDateHeaderValue() {
+        return dateHeaderValue;
+    }
+
+    /**
      * Returns the {@link Resource} containing the origin response body.
      */
     public Resource getResource() {
@@ -237,4 +249,21 @@ public class HttpCacheEntry implements Serializable {
         return "[request date=" + this.requestDate + "; response date=" + this.responseDate
                 + "; statusLine=" + this.statusLine + "]";
     }
+
+    /**
+     * Find the "Date" response header and parse it into a java.util.Date
+     * @return the Date value of the header or null if the header is not present
+     */
+    private Date parseDate() {
+        Header dateHdr = getFirstHeader(HTTP.DATE_HEADER);
+        if (dateHdr == null)
+            return null;
+        try {
+            return DateUtils.parseDate(dateHdr.getValue());
+        } catch (DateParseException dpe) {
+            // ignore malformed date
+        }
+        return null;
+    }
+
 }

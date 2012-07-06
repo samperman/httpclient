@@ -299,4 +299,34 @@ public class TestHttpCacheEntry {
         assertNotNull(entry.toString());
         assertFalse("".equals(entry.toString()));
     }
+
+    @Test
+    public void testMissingDateHeaderIsIgnored() {
+        Header[] headers = new Header[] {};
+        entry = new HttpCacheEntry(new Date(), new Date(), statusLine,
+                                   headers, mockResource);
+        assertNull(entry.getDateHeaderValue());
+    }
+
+    @Test
+    public void testMalformedDateHeaderIsIgnored() {
+        Header[] headers = new Header[] { new BasicHeader("Date", "asdf") };
+        entry = new HttpCacheEntry(new Date(), new Date(), statusLine,
+                                   headers, mockResource);
+        assertNull(entry.getDateHeaderValue());
+    }
+
+    @Test
+    public void testValidDateHeaderIsParsed() {
+        long now = System.currentTimeMillis();
+        // round down to nearest second to make comparison easier
+        Date date = new Date(now - (now % 1000L));
+        Header[] headers = new Header[] { new BasicHeader("Date", DateUtils.formatDate(date)) };
+        entry = new HttpCacheEntry(new Date(), new Date(), statusLine,
+                                   headers, mockResource);
+        Date dateHeaderValue = entry.getDateHeaderValue();
+        assertNotNull(dateHeaderValue);
+        assertEquals(date.getTime(), dateHeaderValue.getTime());
+    }
+
 }

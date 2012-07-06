@@ -352,13 +352,6 @@ public class TestCacheValidityPolicy {
     }
 
     @Test
-    public void testMalformedDateHeaderIsIgnored() {
-        Header[] headers = new Header[] { new BasicHeader("Date", "asdf") };
-        HttpCacheEntry entry = HttpTestUtils.makeCacheEntry(headers);
-        assertNull(impl.getDateValue(entry));
-    }
-
-    @Test
     public void testMalformedContentLengthReturnsNegativeOne() {
         Header[] headers = new Header[] { new BasicHeader("Content-Length", "asdf") };
         HttpCacheEntry entry = HttpTestUtils.makeCacheEntry(headers);
